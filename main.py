@@ -1,4 +1,6 @@
 import argparse
+import time
+
 import pymongo
 from dotenv import dotenv_values
 from selenium import webdriver
@@ -10,7 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-config = dotenv_values(".env")
+config = dotenv_values()
 post_xpath = "//*[starts-with(@class, 'post_content')]"
 post_text_xpath = "//*[starts-with(@class, 'wall_post_text')]"
 
@@ -49,24 +51,16 @@ if __name__ == '__main__':
 
     for _ in range(10):
         try:
+            WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="wl_post"]')))
             post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
             post_text = post_content.find_element(By.CLASS_NAME, 'wall_post_text').text
             print(post_text)
-            driver.implicitly_wait(50)
-            try:
-                element = WebDriverWait(driver, 50).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="wk_right_arrow"]'))
-                )
-
-                next_button = driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]')
-                next_button.click()
-            finally:
-                pass
-
+            old_url = driver.current_url
+            driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
+            WebDriverWait(driver, 10).until(lambda driver: driver.current_url != old_url)
 
         except NoSuchElementException:
-            post_text = 'No text founded'
-            print(post_text)
+            print('No text founded')
 
     # for post in driver.find_elements(By.XPATH, post_xpath):
     #     post_text = post.find_element(By.CLASS_NAME, "wall_post_text").text
