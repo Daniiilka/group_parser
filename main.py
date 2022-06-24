@@ -54,7 +54,16 @@ if __name__ == '__main__':
             WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="wl_post"]')))
             post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
             post_text = post_content.find_element(By.CLASS_NAME, 'wall_post_text').text
-            print(post_text)
+            replies = dict()
+            for reply in post_content.find_elements(By.CLASS_NAME, 'reply_content'):
+                reply_author = reply.find_element(By.CLASS_NAME, 'reply_author').text
+                reply_text = reply.find_element(By.CLASS_NAME, 'reply_text').text
+                replies.update({reply_author: reply_text})
+            # insert data into db
+            mydict = {"post_text": post_text, "post_replies": replies}
+            mycol.insert_one(mydict)
+
+
             old_url = driver.current_url
             driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
             WebDriverWait(driver, 10).until(lambda driver: driver.current_url != old_url)
