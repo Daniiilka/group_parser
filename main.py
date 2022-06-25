@@ -8,7 +8,6 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver import ChromeOptions, Keys
 from selenium.webdriver.common.by import By
 
-
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -51,22 +50,40 @@ if __name__ == '__main__':
 
     for _ in range(10):
         try:
-            WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="wl_post"]')))
+            WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+                (By.XPATH, '//*[@id="wl_post"]')))
             post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
-            post_text = post_content.find_element(By.CLASS_NAME, 'wall_post_text').text
-            replies = dict()
-            for reply in post_content.find_elements(By.CLASS_NAME, 'reply_content'):
-                reply_author = reply.find_element(By.CLASS_NAME, 'reply_author').text
-                reply_text = reply.find_element(By.CLASS_NAME, 'reply_text').text
-                replies.update({reply_author: reply_text})
-            # insert data into db
-            mydict = {"post_text": post_text, "post_replies": replies}
-            mycol.insert_one(mydict)
+            post_text = post_content.find_element(By.CLASS_NAME,
+                                                  'wall_post_text').text
 
+            try:
+
+                driver.find_element(By.XPATH, '//*[starts-with(@id, "wpt")]/div[2]/div/a').click()
+                WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH,"//*[@id='pv_photo']")))
+                post_photo = driver.find_element(By.XPATH, '//*[@id="pv_photo"]/img').get_attribute("src")
+                webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+
+            except NoSuchElementException:
+                post_photo = None
+
+            replies = dict()
+            if post_content.find_elements(By.CLASS_NAME, 'reply_content'):
+
+                for reply in post_content.find_elements(By.CLASS_NAME,
+                                                        'reply_content'):
+                    reply_author = reply.find_element(By.CLASS_NAME,
+                                                      'reply_author').text
+                    reply_text = reply.find_element(By.CLASS_NAME,
+                                                    'reply_text').text
+                    replies.update({reply_author: reply_text})
+            # insert data into db
+            mydict = {"post_text": post_text, "post_photo": post_photo, "post_replies": replies}
+            mycol.insert_one(mydict)
 
             old_url = driver.current_url
             driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
-            WebDriverWait(driver, 10).until(lambda driver: driver.current_url != old_url)
+            WebDriverWait(driver, 10).until(
+                lambda driver: driver.current_url != old_url)
 
         except NoSuchElementException:
             print('No text founded')
@@ -89,11 +106,11 @@ if __name__ == '__main__':
     #             reply_text = 'None'
     #         replies.update({reply_author: reply_text})
 
-        # mydict = {"post_text": post_text, "post_replies": replies}
-        # print(post_text)
-        # print('-------------------------------------------------------')
-        # print(replies, end='\n\n')
-        # x = mycol.insert_one(mydict)
+    # mydict = {"post_text": post_text, "post_replies": replies}
+    # print(post_text)
+    # print('-------------------------------------------------------')
+    # print(replies, end='\n\n')
+    # x = mycol.insert_one(mydict)
 
     # XPath for every post on a downloaded wall
     # //*[starts-with(@class, 'post_content')]
