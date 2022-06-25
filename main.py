@@ -1,5 +1,4 @@
 import argparse
-import time
 
 import pymongo
 from dotenv import dotenv_values
@@ -49,13 +48,15 @@ if __name__ == '__main__':
     post.click()
 
     for _ in range(10):
+        # try to upload single post and get text
         try:
             WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="wl_post"]')))
             post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
             post_text = post_content.find_element(By.CLASS_NAME,
                                                   'wall_post_text').text
-
+            # if photo exist -> click on it and get a link ->
+            # -> pressing ESC button to continue scrolling of posts
             try:
 
                 driver.find_element(By.XPATH, '//*[starts-with(@id, "wpt")]/div[2]/div/a').click()
@@ -65,7 +66,7 @@ if __name__ == '__main__':
 
             except NoSuchElementException:
                 post_photo = None
-
+            # getting the list of replies and parse {author: text_of_reply}
             replies = dict()
             if post_content.find_elements(By.CLASS_NAME, 'reply_content'):
 
@@ -76,44 +77,20 @@ if __name__ == '__main__':
                     reply_text = reply.find_element(By.CLASS_NAME,
                                                     'reply_text').text
                     replies.update({reply_author: reply_text})
-            # insert data into db
+
+            # insert data into database
             mydict = {"post_text": post_text, "post_photo": post_photo, "post_replies": replies}
             mycol.insert_one(mydict)
 
+            # setting up waiting for a changes in the URL link
             old_url = driver.current_url
             driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
             WebDriverWait(driver, 10).until(
                 lambda driver: driver.current_url != old_url)
 
         except NoSuchElementException:
-            print('No text founded')
+            print("That's all, thanks")
+            driver.quit()
 
-    # for post in driver.find_elements(By.XPATH, post_xpath):
-    #     post_text = post.find_element(By.CLASS_NAME, "wall_post_text").text
-    #     replies = dict()
-    #
-    #     for post_reply in post.find_elements(By.CLASS_NAME, "reply_content"):
-    #         try:
-    #             reply_author = post_reply.find_element(By.CLASS_NAME,
-    #                                                    'reply_author').text
-    #         except NoSuchElementException:
-    #             reply_author = 'None'
-    #
-    #         try:
-    #             reply_text = post_reply.find_element(By.CLASS_NAME,
-    #                                              'reply_text').text
-    #         except NoSuchElementException:
-    #             reply_text = 'None'
-    #         replies.update({reply_author: reply_text})
-
-    # mydict = {"post_text": post_text, "post_replies": replies}
-    # print(post_text)
-    # print('-------------------------------------------------------')
-    # print(replies, end='\n\n')
-    # x = mycol.insert_one(mydict)
-
-    # XPath for every post on a downloaded wall
-    # //*[starts-with(@class, 'post_content')]
-    # XPath for wall of group
-    # //*[@id="page_wall_posts"]
-    # driver.quit()
+    # close Chrome after for loop
+    driver.quit()
