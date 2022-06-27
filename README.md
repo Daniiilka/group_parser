@@ -29,3 +29,5 @@ config['GROUP_LINK']
 You can use config['GROUP_LINK'] to specify a reference to the group.
 
 Or you can specify a link to the group in the file .env specifying GROUP_LINK.
+
+Example for *.env* file: *GROUP_LINK='https://vk.com/cyberleninka'*
