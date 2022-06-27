@@ -8,13 +8,13 @@ To use the parser, you need to close all current Google Chrome windows.
 pip install selenium
 ```
 ## Args
-As arguments to the program, you need to pass the path to the file with your browser session.
+*--profile_path* - you need to pass the path to the file with your browser session.
 
-Example:
+Example: *'C:\Users\USERNAME\AppData\Local\Google\Chrome\User Data'*
 
-*C:\Users\USERNAME\AppData\Local\Google\Chrome\User Data*
+*--storage* - the program allows you to save data to a MongoDB database or to a JSON file.
 
-The program allows you to save data to a MongoDB database or to a JSON file.
+For specify saver use this args: *'mongoDB'* or *'JSON'*
 
 ## Install browser driver
 Due to the fact that the parser is specialized for Chrome, download chromedriver.exe and place it at the root of the project.
