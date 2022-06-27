@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import json
+
 config = dotenv_values()
 post_xpath = "//*[starts-with(@class, 'post_content')]"
 post_text_xpath = "//*[starts-with(@class, 'wall_post_text')]"
@@ -22,6 +24,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-p', '--profile_path', help='path to chrome session '
                                                      'folder', required=True)
+    # we can also save data in MongoDB or in json file if required
+    parser.add_argument('-m', '--storage', help='arg to save data in '
+                                                'MongoDB or in JSON file',
+                        required=True, choices=['mongoDB', 'JSON'])
     args = parser.parse_args()
 
     # setting up options for selenium
@@ -30,12 +36,12 @@ if __name__ == '__main__':
     options.add_argument(f'--user-data-dir={args.profile_path}')
     driver = webdriver.Chrome(options=options)
 
-    # setting up our DataBase
+    # setting up our DataBase if we using MongoDB
     # -------------------------------------------------------------------------
-    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-
-    mydb = myclient["vk_group_parser"]
-    mycol = mydb["wall_data"]
+    if args.storage == 'mongoDB':
+        myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+        mydb = myclient["vk_group_parser"]
+        mycol = mydb["wall_data"]
 
     # getting posts data from the wall of group
     # -------------------------------------------------------------------------
@@ -47,7 +53,7 @@ if __name__ == '__main__':
     post = driver.find_element(By.CLASS_NAME, 'wall_post_text')
     post.click()
 
-    for _ in range(10):
+    for _ in range(5):
         # try to upload single post and get text
         try:
             WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
@@ -58,10 +64,14 @@ if __name__ == '__main__':
             # if photo exist -> click on it and get a link ->
             # -> pressing ESC button to continue scrolling of posts
             try:
-
-                driver.find_element(By.XPATH, '//*[starts-with(@id, "wpt")]/div[2]/div/a').click()
-                WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH,"//*[@id='pv_photo']")))
-                post_photo = driver.find_element(By.XPATH, '//*[@id="pv_photo"]/img').get_attribute("src")
+                driver.find_element(By.XPATH,
+                                    '//*[starts-with(@id, "wpt")]/div[2]/div/a').click()
+                WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@id='pv_photo']")))
+                post_photo = driver.find_element(By.XPATH,
+                                                 '//*[@id="pv_photo"]/img').get_attribute(
+                    "src")
                 webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 
             except NoSuchElementException:
@@ -78,13 +88,21 @@ if __name__ == '__main__':
                                                     'reply_text').text
                     replies.update({reply_author: reply_text})
 
-            # insert data into database
-            mydict = {"post_text": post_text, "post_photo": post_photo, "post_replies": replies}
-            mycol.insert_one(mydict)
+            # filling row in the dictionary
+            mydict = {"post_text": post_text, "post_photo": post_photo,
+                      "post_replies": replies}
+
+            # insert data into database if we're using MongoDB
+            if args.storage == 'mongoDB':
+                mycol.insert_one(mydict)
+            else:
+                with open("sample.json", "a+", encoding='utf-8') as outfile:
+                    json.dump(mydict, outfile, ensure_ascii=False)
 
             # setting up waiting for a changes in the URL link
             old_url = driver.current_url
-            driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
+            driver.find_element(By.XPATH,
+                                '//*[@id="wk_right_arrow"]').click()
             WebDriverWait(driver, 10).until(
                 lambda driver: driver.current_url != old_url)
 
