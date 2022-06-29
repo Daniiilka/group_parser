@@ -65,70 +65,97 @@ if __name__ == "__main__":
     post = driver.find_element(By.CLASS_NAME, "wall_post_text")
     post.click()
 
-    for _ in range(5):
+    while True:
         # try to upload single post and get text
         try:
-            wait_until_visibility('//*[@id="wl_post"]')
-            post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
-            post_text = post_content.find_element(
-                By.CLASS_NAME, "wall_post_text"
-            ).text
-            # if photo exists -> click on it and get a link ->
-            # -> pressing ESC button to continue scrolling of posts
-            try:
-                driver.find_element(
-                    By.XPATH, '//*[starts-with(@id, "wpt")]/div[2]/div/a'
-                ).click()
-                wait_until_visibility("//*[@id='pv_photo']")
-                post_photo = driver.find_element(
-                    By.XPATH, '//*[@id="pv_photo"]/img'
-                ).get_attribute("src")
-                webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-
-            except NoSuchElementException:
-                post_photo = None
-
-            # getting the list of replies and parse {author: text_of_reply}
-            replies = dict()
-            if post_content.find_elements(By.CLASS_NAME, "reply_content"):
-
-                for reply in post_content.find_elements(
-                    By.CLASS_NAME, "reply_content"
-                ):
-                    reply_author = reply.find_element(
-                        By.CLASS_NAME, "reply_author"
-                    ).text
-                    reply_text = reply.find_element(
-                        By.CLASS_NAME, "reply_text"
-                    ).text
-                    replies.update({reply_author: reply_text})
-
-            # filling row in the dictionary
-            mydict = {
-                "post_text": post_text,
-                "post_photo": post_photo,
-                "post_replies": replies,
-            }
-
-            # insert data into database if we're using MongoDB or
-            # dump data into JSON file
-            if args.storage == "mongo":
-                mycol.insert_one(mydict)
-            else:
-                with open("sample.json", "a+", encoding="utf-8") as outfile:
-                    json.dump(mydict, outfile, ensure_ascii=False)
-
-            # setting up waiting for a changes in the URL link
-            old_url = driver.current_url
-            driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
             WebDriverWait(driver, 10).until(
-                lambda driver: driver.current_url != old_url
+                EC.presence_of_element_located(
+                    (By.XPATH, '//*[@id="wl_post"]')
+                )
+            )
+            post_content = driver.find_element(By.XPATH, '//*[@id="wl_post"]')
+        except NoSuchElementException:
+            driver.quit()
+            print("done!")
+            break
+        post_text = []
+
+        try:
+            post_text.append(
+                post_content.find_element(By.CLASS_NAME, "wall_post_text").text
+            )
+        except NoSuchElementException:
+            try:
+                post_text.append(
+                    post_content.find_element(
+                        By.XPATH,
+                        "//*[starts-with(@id, 'post_media_lnk')]/a[2]",
+                    ).get_attribute("href")
+                )
+            except NoSuchElementException:
+                try:
+                    post_text.append(
+                        post.find_element(
+                            By.XPATH,
+                            '//*[starts-with(@class, "article_snippet")]',
+                        ).get_attribute("href")
+                    )
+                except NoSuchElementException:
+                    post_text = None
+
+        # if photo exists -> click on it and get a link ->
+        # -> pressing ESC button to continue scrolling of posts
+        try:
+            driver.find_element(
+                By.XPATH, '//*[starts-with(@id, "wpt")]/div[2]/div/a'
+            ).click()
+            WebDriverWait(driver, 10).until(
+                EC.visibility_of_element_located(
+                    (By.XPATH, "//*[@id='pv_photo']")
+                )
             )
 
-        except NoSuchElementException:
-            print("That's all, thanks")
-            driver.quit()
+            post_photo = driver.find_element(
+                By.XPATH, '//*[@id="pv_photo"]/img'
+            ).get_attribute("src")
+            webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 
-    # close Chrome after for loop
-    print("That's all, thanks")
-    driver.quit()
+        except NoSuchElementException:
+            post_photo = None
+
+        # getting the list of replies and parse {author: text_of_reply}
+        replies = dict()
+        if post_content.find_elements(By.CLASS_NAME, "reply_content"):
+
+            for reply in post_content.find_elements(
+                By.CLASS_NAME, "reply_content"
+            ):
+                reply_author = reply.find_element(
+                    By.CLASS_NAME, "reply_author"
+                ).text
+                reply_text = reply.find_element(
+                    By.CLASS_NAME, "reply_text"
+                ).text
+                replies.update({reply_author: reply_text})
+
+        # filling row in the dictionary
+        mydict = {
+            "post_text": post_text,
+            "post_photo": post_photo,
+            "post_replies": replies,
+        }
+
+        # insert data into database if we're using MongoDB or
+        # dump data into JSON file
+        if args.storage == "mongo":
+            mycol.insert_one(mydict)
+        else:
+            with open("sample.json", "a+", encoding="utf-8") as outfile:
+                json.dump(mydict, outfile, ensure_ascii=False)
+
+        # setting up waiting for a changes in the URL link
+        old_url = driver.current_url
+        driver.find_element(By.XPATH, '//*[@id="wk_right_arrow"]').click()
+        WebDriverWait(driver, 10).until(
+            lambda driver: driver.current_url != old_url
+        )
