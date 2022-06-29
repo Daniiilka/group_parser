@@ -136,3 +136,4 @@ if __name__ == "__main__":
     # close Chrome after for loop
     print("That's all, thanks")
     driver.quit()
+# test
