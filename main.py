@@ -11,8 +11,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 config = dotenv_values()
-post_xpath = "//*[starts-with(@class, 'post_content')]"
-post_text_xpath = "//*[starts-with(@class, 'wall_post_text')]"
 
 
 def wait_until_visibility(element):
@@ -23,7 +21,7 @@ def wait_until_visibility(element):
 
 if __name__ == "__main__":
 
-    # get the path to chrome session to avoid auth in vk, all windows needs
+    # get the path to chrome session to avoid auth in vk, all windows need
     # to be closed
     # -------------------------------------------------------------------------
     parser = argparse.ArgumentParser(description="Description of your program")
@@ -37,9 +35,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-m",
         "--storage",
-        help="arg to save data in " "MongoDB or in JSON file",
+        help="arg to save data in nongo database or in json file",
         required=True,
-        choices=["mongoDB", "JSON"],
+        choices=["mongo", "json"],
     )
     args = parser.parse_args()
 
@@ -47,14 +45,12 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     options = ChromeOptions()
     options.add_argument(f"--user-data-dir={args.profile_path}")
-    # options.add_argument('--headless')
-    # options.add_argument('--disable-gpu')
     # options.headless = True
     driver = webdriver.Chrome(options=options)
 
-    # setting up our DataBase if we using MongoDB
+    # setting up our DataBase if we use MongoDB
     # -------------------------------------------------------------------------
-    if args.storage == "mongoDB":
+    if args.storage == "mongo":
         myclient = pymongo.MongoClient("mongodb://localhost:27017/")
         mydb = myclient["vk_group_parser"]
         mycol = mydb["wall_data"]
@@ -77,7 +73,7 @@ if __name__ == "__main__":
             post_text = post_content.find_element(
                 By.CLASS_NAME, "wall_post_text"
             ).text
-            # if photo exist -> click on it and get a link ->
+            # if photo exists -> click on it and get a link ->
             # -> pressing ESC button to continue scrolling of posts
             try:
                 driver.find_element(
@@ -116,7 +112,7 @@ if __name__ == "__main__":
 
             # insert data into database if we're using MongoDB or
             # dump data into JSON file
-            if args.storage == "mongoDB":
+            if args.storage == "mongo":
                 mycol.insert_one(mydict)
             else:
                 with open("sample.json", "a+", encoding="utf-8") as outfile:
@@ -136,4 +132,3 @@ if __name__ == "__main__":
     # close Chrome after for loop
     print("That's all, thanks")
     driver.quit()
-# test
