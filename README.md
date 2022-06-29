@@ -1,12 +1,11 @@
 # group_parser
 To use the parser, you need to close all current Google Chrome windows.
 
+## Example of run
+
+```python main.py --profile_path 'C:\Users\USERNAME\AppData\Local\Google\Chrome\User Data' --storage json```
 
 
-## install selenium
-```python
-pip install selenium
-```
 ## Args
 ```--profile_path``` - you need to pass the path to the file with your browser session.
 
@@ -29,6 +28,7 @@ config['GROUP_LINK']
 
 You can use ```config['GROUP_LINK']``` to specify a reference to the group.
 
-Or you can specify a link to the group in the file ```.env``` specifying ```GROUP_LINK```.
+You can specify a link to the group in the file ```.env``` specifying ```GROUP_LINK```.
 
-Example for ```.env``` file: ```GROUP_LINK='https://vk.com/cyberleninka'```
+
+Please rename ```.env_template``` to ```.env``` with your correct link to the group
