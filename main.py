@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 
 import pymongo
@@ -150,7 +151,9 @@ if __name__ == "__main__":
         if args.storage == "mongo":
             mycol.insert_one(mydict)
         else:
-            with open("sample.json", "a+", encoding="utf-8") as outfile:
+            with open(
+                f"sample{datetime.datetime.now()}.json", "a+", encoding="utf-8"
+            ) as outfile:
                 json.dump(mydict, outfile, ensure_ascii=False)
 
         # setting up waiting for a changes in the URL link
