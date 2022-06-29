@@ -13,12 +13,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 config = dotenv_values()
 
 
-def wait_until_visibility(element):
-    WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.XPATH, element))
-    )
-
-
 if __name__ == "__main__":
 
     # get the path to chrome session to avoid auth in vk, all windows need
