@@ -22,13 +22,5 @@ Check the version of your browser before installing the driver (the version of t
 [chromedriver.zip](https://chromedriver.storage.googleapis.com/index.html)
 
 ## Vk group's link
-```python
-config['GROUP_LINK'] 
-```
-
-You can use ```config['GROUP_LINK']``` to specify a reference to the group.
-
-You can specify a link to the group in the file ```.env``` specifying ```GROUP_LINK```.
-
 
 Please rename ```.env_template``` to ```.env``` with your correct link to the group
