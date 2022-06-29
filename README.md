@@ -14,7 +14,7 @@ Example: ```'C:\Users\USERNAME\AppData\Local\Google\Chrome\User Data'```
 
 ```--storage``` - the program allows you to save data to a MongoDB database or to a JSON file.
 
-For specify saver use this args: *'mongodb'* or *'json'*
+For specify saver use this args: *'mongo'* or *'json'*
 
 ## Install browser driver
 Due to the fact that the parser is specialized for Chrome, download chromedriver.exe and place it at the root of the project.
